@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 from sweetviz import analyze
+from dtale.views import startup
+from dtale.app import get_instance
 import pandas as pd
 import dtale
 
@@ -52,38 +54,51 @@ if selected== 'EDA':
     ---
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    report_selected = st.selectbox('Select Report', ['None', 'View Statistcs','Detailed Analysis'])
 
-    with col2:
-        dtale_bt = st.button('Detailed Analysis')
-        if dtale_bt:
-            if uploaded_file is not None:
-                # Read the uploaded CSV file into a DataFrame
-                data = pd.read_csv(uploaded_file)
+    # col1, col2 = st.columns(2)
 
-                st.write("### Sample Data")
-                st.write(data.head())
+    # with col2:
+        # dtale_bt = st.button('Detailed Analysis')
+        # if dtale_bt:
+    if report_selected == 'Detailed Analysis':
+        
+        if uploaded_file is not None:
+            # Read the uploaded CSV file into a DataFrame
+            df = pd.read_csv(uploaded_file)
 
-                st.write("### Data Analysis with D-Tale")
-                dtale.show(data).open_browser()
+            # st.write("### Sample Data")
+            # st.write(df.head())
+
+            st.write("### Data Analysis with D-Tale")
+            # dtale.show(data)
+            startup(data_id="1", data=df)
+            df = get_instance("1").data
+            st.markdown(
+                    "<iframe src=/dtale/main/1 / width='1000' height='1000'>",
+                    unsafe_allow_html=True
+                )
         
         
 
-    with col1:
-        sweetviz_bt = st.button('View Statistics')
-        if sweetviz_bt:
-            if uploaded_file is not None:
-                data = pd.read_csv(uploaded_file)
+    # with col1:
+    #     sweetviz_bt = st.button('View Statistics')
+    #     if sweetviz_bt:
+    if report_selected == 'View Statistcs':
+        if uploaded_file is not None:
+            data = pd.read_csv(uploaded_file)
 
-                # Analyze data using Sweetviz
-                sweetviz_report = analyze(data)
+            # Analyze data using Sweetviz
+            sweetviz_report = analyze(data)
 
-                # Generate HTML report using Sweetviz
-                report_html = sweetviz_report.show_html()
+            # Generate HTML report using Sweetviz
+            report_html = sweetviz_report.show_html(filepath='./source_code/EDA.html',
+                                                open_browser=False)
+            
 
-                # Display Sweetviz report in Streamlit app
-                st.subheader("Sweetviz Report:")
-                st.components.v1.html(open("SWEETVIZ_REPORT.html", "r").read(), width=1000, height=600, scrolling=True)
+            # Display Sweetviz report in Streamlit app
+            st.subheader("Statistical Report:")
+            st.components.v1.html(open("source_code/EDA.html", "r").read(), width=1000, height=1000, scrolling=True)
 
 
 
@@ -123,3 +138,4 @@ if selected == 'Chatbot':
     
     for role, text in st.session_state['chat_history']:
         st.write(f"{role}: {text}")
+        
