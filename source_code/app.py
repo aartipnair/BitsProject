@@ -6,9 +6,14 @@ from dtale.views import startup
 from dtale.app import get_instance
 import pandas as pd
 import dtale
+import os
 
 # from source_code.chatbot_openai import chat_
 from chatbot_pandasai import chat_
+from lida_model import lida_model_sum
+
+# set open api key
+os.environ[""] = ""
 
 #set page
 st.set_page_config(page_title="Analytics Dashboard", page_icon="🌎", layout="wide")  
@@ -32,14 +37,30 @@ with st.sidebar:
 
 uploaded_file = st.sidebar.file_uploader("Upload File", type=["csv"])
 
+
+
 if selected=='Home':
     st.header("👩‍💼 Health and fitness - Data App")
+    st.markdown("""
+    <style>
+    div[data-testid="stHeader"] {
+    margin-bottom: 20px; /* Adjust the margin as needed */
+    }
+    </style>
+
+    ---
+    """, unsafe_allow_html=True)
+
+    if uploaded_file:
+        st.subheader('Summary of data')
+        lida_model_sum(uploaded_file)
+    else:
     
-    div1 , div2 = st.columns(2)
-    with div1:
-        st.image('images/logo.jpg', width=400)
-    with div2:
-        st.image('images/Women_logo.png', width=530)
+        div1 , div2 = st.columns(2)
+        with div1:
+            st.image('images/logo.jpg', width=400)
+        with div2:
+            st.image('images/Women_logo.png', width=530)
 
 if selected== 'EDA':
     st.header("📈 Exploratory Data Analysis (EDA) in Python")
@@ -54,7 +75,7 @@ if selected== 'EDA':
     ---
     """, unsafe_allow_html=True)
 
-    report_selected = st.selectbox('Select Report', ['None', 'View Statistcs','Detailed Analysis'])
+    report_selected = st.sidebar.selectbox('Select Report', ['None', 'View Statistcs','Detailed Analysis'])
 
     # col1, col2 = st.columns(2)
 
@@ -70,14 +91,15 @@ if selected== 'EDA':
             # st.write("### Sample Data")
             # st.write(df.head())
 
-            st.write("### Data Analysis with D-Tale")
-            # dtale.show(data)
-            startup(data_id="1", data=df)
-            df = get_instance("1").data
-            st.markdown(
-                    "<iframe src=/dtale/main/1 / width='1000' height='1000'>",
-                    unsafe_allow_html=True
-                )
+            with st.spinner('Analysing your data, please wait ...'):
+
+                # dtale.show(data)
+                startup(data_id="1", data=df)
+                df = get_instance("1").data
+                st.markdown(
+                        "<iframe src=/dtale/main/1 / width='1000' height='1000'>",
+                        unsafe_allow_html=True
+                    )
         
         
 
@@ -88,17 +110,19 @@ if selected== 'EDA':
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
 
-            # Analyze data using Sweetviz
-            sweetviz_report = analyze(data)
+            with st.spinner('Analysing your data, please wait ...'):
 
-            # Generate HTML report using Sweetviz
-            report_html = sweetviz_report.show_html(filepath='./source_code/EDA.html',
-                                                open_browser=False)
-            
+                # Analyze data using Sweetviz
+                sweetviz_report = analyze(data)
 
-            # Display Sweetviz report in Streamlit app
-            st.subheader("Statistical Report:")
-            st.components.v1.html(open("source_code/EDA.html", "r").read(), width=1000, height=1000, scrolling=True)
+                # Generate HTML report using Sweetviz
+                report_html = sweetviz_report.show_html(filepath='./source_code/EDA.html',
+                                                    open_browser=False)
+                
+
+                # Display Sweetviz report in Streamlit app
+                st.subheader("Statistical Report:")
+                st.components.v1.html(open("source_code/EDA.html", "r").read(), width=1000, height=1000, scrolling=True)
 
 
 
@@ -126,6 +150,7 @@ if selected == 'Chatbot':
     if user_input:
 
         st.session_state['chat_history'].append(("You", user_input))
+        st.cache(chat_, persist=False)
         response = chat_(uploaded_file= uploaded_file, query=user_input)
         st.write("Bot:", response)
         
